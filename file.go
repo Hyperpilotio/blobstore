@@ -6,8 +6,6 @@ import (
 	"os"
 	"path"
 	"sync"
-
-	"github.com/spf13/viper"
 )
 
 // File store saves each key value as a seperate file in the folder
@@ -19,7 +17,7 @@ type FileStore struct {
 	mutex sync.Mutex
 }
 
-func NewFile(name string, config *viper.Viper) (*FileStore, error) {
+func NewFile(name string, config BlobStoreConfig) (*FileStore, error) {
 	Path := path.Join(config.GetString("filesPath"), name)
 	os.MkdirAll(Path, os.ModePerm)
 	return &FileStore{

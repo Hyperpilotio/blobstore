@@ -3,8 +3,6 @@ package blobstore
 import (
 	"errors"
 	"strings"
-
-	"github.com/spf13/viper"
 )
 
 type BlobStore interface {
@@ -17,7 +15,11 @@ type BlobStore interface {
 	Delete(key string) error
 }
 
-func NewBlobStore(name string, config *viper.Viper) (BlobStore, error) {
+type BlobStoreConfig interface {
+	GetString(name string) string
+}
+
+func NewBlobStore(name string, config BlobStoreConfig) (BlobStore, error) {
 	storeType := strings.ToLower(config.GetString("store.type"))
 	switch storeType {
 	case "simpledb":

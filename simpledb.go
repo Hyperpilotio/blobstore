@@ -12,10 +12,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/simpledb"
 	"github.com/golang/glog"
-	"github.com/spf13/viper"
 )
 
-func getDomainName(name string, config *viper.Viper) string {
+func getDomainName(name string, config BlobStoreConfig) string {
 	return name + config.GetString("store.domainPostfix")
 }
 
@@ -23,11 +22,11 @@ type SimpleDB struct {
 	Name        string
 	domainName  string
 	Region      string
-	Config      *viper.Viper
+	Config      BlobStoreConfig
 	simpledbSvc *simpledb.SimpleDB
 }
 
-func NewSimpleDB(name string, config *viper.Viper) (*SimpleDB, error) {
+func NewSimpleDB(name string, config BlobStoreConfig) (*SimpleDB, error) {
 	region := strings.ToLower(config.GetString("store.region"))
 	session, err := createSessionByRegion(config, region)
 	if err != nil {
@@ -49,7 +48,7 @@ func NewSimpleDB(name string, config *viper.Viper) (*SimpleDB, error) {
 	}, nil
 }
 
-func createDomain(simpledbSvc *simpledb.SimpleDB, config *viper.Viper, domainName string) error {
+func createDomain(simpledbSvc *simpledb.SimpleDB, config BlobStoreConfig, domainName string) error {
 	createDomainInput := &simpledb.CreateDomainInput{
 		DomainName: aws.String(domainName),
 	}
@@ -239,15 +238,15 @@ func appendAttributes(attrs *[]*simpledb.ReplaceableAttribute, fieldName string,
 	})
 }
 
-func createSessionByRegion(viper *viper.Viper, regionName string) (*session.Session, error) {
-	awsId := viper.GetString("awsId")
-	awsSecret := viper.GetString("awsSecret")
+func createSessionByRegion(config BlobStoreConfig, regionName string) (*session.Session, error) {
+	awsId := config.GetString("awsId")
+	awsSecret := config.GetString("awsSecret")
 	creds := credentials.NewStaticCredentials(awsId, awsSecret, "")
-	config := &aws.Config{
+	awsConfig := &aws.Config{
 		Region: aws.String(regionName),
 	}
-	config = config.WithCredentials(creds)
-	sess, err := session.NewSession(config)
+	awsConfig = awsConfig.WithCredentials(creds)
+	sess, err := session.NewSession(awsConfig)
 	if err != nil {
 		glog.Errorf("Unable to create session: %s", err)
 		return nil, err
