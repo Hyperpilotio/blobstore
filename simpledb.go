@@ -77,6 +77,37 @@ func (db *SimpleDB) Store(key string, object interface{}) error {
 	return nil
 }
 
+func (db *SimpleDB) Load(key string, object interface{}) error {
+	if object == nil || reflect.ValueOf(object).IsNil() {
+		return errors.New("Unable to put attributes to nil struct...")
+	}
+
+	selectExpression := fmt.Sprintf("select * from `%s` where itemName() in ('%s')", db.domainName, key)
+	selectInput := &simpledb.SelectInput{
+		SelectExpression: aws.String(selectExpression),
+	}
+
+	selectOutput, err := db.simpledbSvc.Select(selectInput)
+	if err != nil {
+		return errors.New("Unable to select data from simpleDB: " + err.Error())
+	}
+
+	for _, item := range selectOutput.Items {
+		getAttributesInput := &simpledb.GetAttributesInput{
+			DomainName: aws.String(db.domainName),
+			ItemName:   item.Name,
+		}
+
+		resp, err := db.simpledbSvc.GetAttributes(getAttributesInput)
+		if err != nil {
+			return errors.New("Unable to get attributes from simpleDB: " + err.Error())
+		}
+		recursiveSetValue(object, resp.Attributes)
+	}
+
+	return nil
+}
+
 func (db *SimpleDB) LoadAll(f func() interface{}) (interface{}, error) {
 	selectExpression := fmt.Sprintf("select * from `%s`", db.domainName)
 	selectInput := &simpledb.SelectInput{
@@ -137,6 +168,10 @@ func (db *SimpleDB) Delete(key string) error {
 }
 
 func recursiveSetValue(v interface{}, attributes []*simpledb.Attribute) {
+	if v == nil || reflect.ValueOf(v).IsNil() {
+		return
+	}
+
 	modelReflect := reflect.ValueOf(v).Elem()
 	modelRefType := modelReflect.Type()
 	fieldsCount := modelReflect.NumField()

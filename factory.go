@@ -12,6 +12,7 @@ type BlobStore interface {
 	// objects created by the factory func.
 	// Factory is the function to create a per typed interface object
 	LoadAll(factory func() interface{}) (interface{}, error)
+	Load(key string, object interface{}) error
 	Delete(key string) error
 }
 
