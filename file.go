@@ -45,25 +45,12 @@ func (file *FileStore) Load(key string, object interface{}) error {
 	defer file.mutex.Unlock()
 
 	if object == nil || reflect.ValueOf(object).IsNil() {
-		return errors.New("Unable to load file to nil struct...")
+		return errors.New("Unable to load file to nil struct")
 	}
 
-	files, filesErr := ioutil.ReadDir(file.Path)
-	if filesErr != nil {
-		return fmt.Errorf("Unable to read directory %s: %s", file.Path, filesErr.Error())
-	}
-
-	for _, fileInfo := range files {
-		if fileInfo.IsDir() {
-			continue
-		}
-		if fileInfo.Name() == key {
-			filePath := path.Join(file.Path, fileInfo.Name())
-			if err := LoadFileToObject(filePath, object); err != nil {
-				return fmt.Errorf("Unable to load file %s: %s", filePath, err.Error())
-			}
-			break
-		}
+	filePath := path.Join(file.Path, key)
+	if err := LoadFileToObject(filePath, object); err != nil {
+		return err
 	}
 
 	return nil
