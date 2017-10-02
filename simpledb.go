@@ -14,10 +14,6 @@ import (
 	"github.com/golang/glog"
 )
 
-func getDomainName(name string, config BlobStoreConfig) string {
-	return name + config.GetString("store.domainPostfix")
-}
-
 type SimpleDB struct {
 	Name        string
 	domainName  string

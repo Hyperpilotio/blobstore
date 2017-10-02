@@ -1,10 +1,20 @@
 package: github.com/hyperpilotio/blobstore
 import:
 - package: github.com/aws/aws-sdk-go
-  version: ~1.6.4
   subpackages:
   - aws
   - aws/credentials
   - aws/session
   - service/simpledb
 - package: github.com/golang/glog
+- package: golang.org/x/oauth2
+  subpackages:
+  - google
+- package: google.golang.org/api
+  subpackages:
+  - datastore/v1
+testImport:
+- package: github.com/spf13/viper
+- package: github.com/stretchr/testify
+  subpackages:
+  - assert
