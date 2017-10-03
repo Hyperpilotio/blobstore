@@ -165,7 +165,7 @@ func createDatastoreService(serviceAccountPath string) (*datastore.Service, erro
 	client := conf.Client(oauth2.NoContext)
 	datastoreSvc, err := datastore.New(client)
 	if err != nil {
-		return nil, errors.New("Unable to create google cloud platform storage service: " + err.Error())
+		return nil, errors.New("Unable to create google cloud platform datastore service: " + err.Error())
 	}
 
 	return datastoreSvc, nil
