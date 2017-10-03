@@ -193,8 +193,14 @@ func recursiveEntityProperties(props map[string]datastore.Value, v interface{}) 
 			if ok {
 				return errors.New("Unable to set value to properties, duplicate	key name")
 			}
-			props[fieldName] = datastore.Value{
-				StringValue: fieldValue,
+			if fieldValue != "" {
+				props[fieldName] = datastore.Value{
+					StringValue: fieldValue,
+				}
+			} else {
+				props[fieldName] = datastore.Value{
+					NullValue: "NULL_VALUE",
+				}
 			}
 		}
 	}

@@ -15,15 +15,15 @@ type TestDeployment struct {
 }
 
 const (
-	testJsonFilePath = "/home/alan/test-13274590fb39.json"
-	testProjectId    = "test-179902"
+	testJsonFilePath = "/home/alan/gcpServiceAccount.json"
+	testProjectId    = "alan-181801"
 	testKind         = "testStore"
 )
 
 func init() {
 	viper := viper.New()
 	viper.SetConfigType("json")
-	viper.Set("gpcServiceAccountJSONFile", testJsonFilePath)
+	viper.Set("gcpServiceAccountJSONFile", testJsonFilePath)
 	blobStoreConfig = viper
 }
 
