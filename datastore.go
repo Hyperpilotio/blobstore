@@ -22,7 +22,7 @@ type DatastoreDB struct {
 }
 
 func NewDatastoreDB(name string, config BlobStoreConfig) (*DatastoreDB, error) {
-	serviceAccountPath := config.GetString("gpcServiceAccountJSONFile")
+	serviceAccountPath := config.GetString("gcpServiceAccountJSONFile")
 	datastoreSvc, err := createDatastoreService(serviceAccountPath)
 	if err != nil {
 		return nil, errors.New("Unable to create GCP datastore service: " + err.Error())
@@ -83,7 +83,7 @@ func (db *DatastoreDB) Load(key string, object interface{}) error {
 		db.DomainName, db.DomainName, key)
 	fmt.Println(gql)
 	resp, err := db.datastoreSvc.Projects.
-		RunQuery(testProjectId, &datastore.RunQueryRequest{
+		RunQuery(db.ProjectId, &datastore.RunQueryRequest{
 			PartitionId: &datastore.PartitionId{
 				ProjectId: db.ProjectId,
 			},
@@ -102,7 +102,7 @@ func (db *DatastoreDB) Load(key string, object interface{}) error {
 
 func (db *DatastoreDB) LoadAll(f func() interface{}) (interface{}, error) {
 	resp, err := db.datastoreSvc.Projects.
-		RunQuery(testProjectId, &datastore.RunQueryRequest{
+		RunQuery(db.ProjectId, &datastore.RunQueryRequest{
 			PartitionId: &datastore.PartitionId{
 				ProjectId: db.ProjectId,
 			},
