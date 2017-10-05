@@ -48,28 +48,48 @@ func (db *DatastoreDB) Store(key string, object interface{}) error {
 	if err := recursiveEntityProperties(properties, object); err != nil {
 		return errors.New("Unable to set properties to entity: " + err.Error())
 	}
-
-	_, err := db.datastoreSvc.Projects.
-		Commit(db.ProjectId, &datastore.CommitRequest{
-			Mode: "NON_TRANSACTIONAL",
-			Mutations: []*datastore.Mutation{
-				&datastore.Mutation{
-					Insert: &datastore.Entity{
-						Key: &datastore.Key{
-							PartitionId: &datastore.PartitionId{
-								ProjectId: db.ProjectId,
-							},
-							Path: []*datastore.PathElement{
-								&datastore.PathElement{
-									Kind: db.DomainName,
-									Name: key,
-								},
-							},
-						},
-						Properties: properties,
-					},
+	entity := &datastore.Entity{
+		Key: &datastore.Key{
+			PartitionId: &datastore.PartitionId{
+				ProjectId: db.ProjectId,
+			},
+			Path: []*datastore.PathElement{
+				&datastore.PathElement{
+					Kind: db.DomainName,
+					Name: key,
 				},
 			},
+		},
+		Properties: properties,
+	}
+
+	gql := fmt.Sprintf("SELECT * FROM %s WHERE __key__ = KEY(%s, '%s')",
+		db.DomainName, db.DomainName, key)
+	resp, err := db.datastoreSvc.Projects.
+		RunQuery(db.ProjectId, &datastore.RunQueryRequest{
+			PartitionId: &datastore.PartitionId{
+				ProjectId: db.ProjectId,
+			},
+			GqlQuery: &datastore.GqlQuery{
+				AllowLiterals: true,
+				QueryString:   gql,
+			},
+		}).Do()
+	if err != nil {
+		return errors.New("Unable to select data from GCP datastore: " + err.Error())
+	}
+
+	var mutation datastore.Mutation
+	if len(resp.Batch.EntityResults) == 0 {
+		mutation = datastore.Mutation{Insert: entity}
+	} else {
+		mutation = datastore.Mutation{Update: entity}
+	}
+
+	_, err = db.datastoreSvc.Projects.
+		Commit(db.ProjectId, &datastore.CommitRequest{
+			Mode:      "NON_TRANSACTIONAL",
+			Mutations: []*datastore.Mutation{&mutation},
 		}).Do()
 	if err != nil {
 		return errors.New("Unable to commit request to GCP datastore: " + err.Error())
@@ -81,7 +101,6 @@ func (db *DatastoreDB) Store(key string, object interface{}) error {
 func (db *DatastoreDB) Load(key string, object interface{}) error {
 	gql := fmt.Sprintf("SELECT * FROM %s WHERE __key__ = KEY(%s, '%s')",
 		db.DomainName, db.DomainName, key)
-	fmt.Println(gql)
 	resp, err := db.datastoreSvc.Projects.
 		RunQuery(db.ProjectId, &datastore.RunQueryRequest{
 			PartitionId: &datastore.PartitionId{
