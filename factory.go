@@ -27,6 +27,8 @@ func NewBlobStore(name string, config BlobStoreConfig) (BlobStore, error) {
 		return NewSimpleDB(name, config)
 	case "file":
 		return NewFile(name, config)
+	case "datastore":
+		return NewDatastoreDB(name, config)
 	default:
 		return nil, errors.New("Unsupported store type: " + storeType)
 	}
