@@ -284,7 +284,6 @@ func restorePropertiesValue(fieldName string, props map[string]datastore.Value) 
 	fieldInfos := map[string]string{}
 	for attrName, fieldValue := range props {
 		attrValue := fieldValue.StringValue
-
 		if strings.Contains(attrName, fieldName+"_") {
 			attrNames := strings.Split(attrName, "_")
 			fieldInfos[attrNames[1]] = attrValue
