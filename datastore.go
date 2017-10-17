@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"reflect"
+	"strconv"
+	"strings"
 
 	"github.com/spf13/viper"
 
@@ -213,8 +215,29 @@ func recursiveEntityProperties(props map[string]datastore.Value, v interface{}) 
 				return errors.New("Unable to set value to properties, duplicate	key name")
 			}
 			if fieldValue != "" {
-				props[fieldName] = datastore.Value{
-					StringValue: fieldValue,
+				// datastore string value can not be greater than 1500
+				splitLen := 1500
+				if len(fieldValue) > splitLen {
+					valLen := 0
+					if len(fieldValue)%splitLen == 0 {
+						valLen = len(fieldValue) / splitLen
+					} else {
+						valLen = len(fieldValue)/splitLen + 1
+					}
+
+					for i := 0; i < valLen; i++ {
+						lastLndex := (i + 1) * splitLen
+						if lastLndex > len(fieldValue) {
+							lastLndex = len(fieldValue)
+						}
+						props[fmt.Sprintf("%s_%s", fieldName, strconv.Itoa(i+1))] = datastore.Value{
+							StringValue: fieldValue[i*splitLen : lastLndex],
+						}
+					}
+				} else {
+					props[fieldName] = datastore.Value{
+						StringValue: fieldValue,
+					}
 				}
 			} else {
 				props[fieldName] = datastore.Value{
@@ -244,9 +267,36 @@ func recursiveSetEntityValue(v interface{}, props map[string]datastore.Value) {
 		case reflect.Interface:
 			recursiveSetEntityValue(field.Interface(), props)
 		default:
-			field.Set(reflect.ValueOf(props[fieldName].StringValue))
+			attrValue := restorePropertiesValue(fieldName, props)
+			field.Set(reflect.ValueOf(attrValue))
 		}
 	}
+}
+
+func restorePropertiesValue(fieldName string, props map[string]datastore.Value) string {
+	for attrName, fieldValue := range props {
+		if fieldName == attrName {
+			return fieldValue.StringValue
+		}
+	}
+
+	fieldValue := ""
+	fieldInfos := map[string]string{}
+	for attrName, fieldValue := range props {
+		attrValue := fieldValue.StringValue
+
+		if strings.Contains(attrName, fieldName+"_") {
+			attrNames := strings.Split(attrName, "_")
+			fieldInfos[attrNames[1]] = attrValue
+		}
+	}
+
+	cnt := len(fieldInfos)
+	for i := 1; i <= cnt; i++ {
+		fieldValue = fieldValue + fieldInfos[strconv.Itoa(i)]
+	}
+
+	return fieldValue
 }
 
 func getProjectId(serviceAccountPath string) (string, error) {
