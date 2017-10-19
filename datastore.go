@@ -207,13 +207,9 @@ func recursiveEntityProperties(props map[string]datastore.Value, v interface{}) 
 		fieldValue := fmt.Sprintf("%v", field.Interface())
 
 		switch field.Kind() {
-		case reflect.Interface:
+		case reflect.Interface, reflect.Ptr:
 			recursiveEntityProperties(props, field.Interface())
 		default:
-			_, ok := props[fieldName]
-			if ok {
-				return errors.New("Unable to set value to properties, duplicate	key name")
-			}
 			if fieldValue != "" {
 				// datastore string value can not be greater than 1500
 				splitLen := 1500
@@ -264,7 +260,7 @@ func recursiveSetEntityValue(v interface{}, props map[string]datastore.Value) {
 		fieldName := modelRefType.Field(i).Name
 
 		switch field.Kind() {
-		case reflect.Interface:
+		case reflect.Interface, reflect.Ptr:
 			recursiveSetEntityValue(field.Interface(), props)
 		default:
 			attrValue := restorePropertiesValue(fieldName, props)
